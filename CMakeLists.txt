@@ -34,7 +34,7 @@ project(samwise-adcs C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-add_executable(samwise-adcs main.c)
+add_executable(samwise-adcs src/main.c)
 
 pico_set_program_name(samwise-adcs "onboarding")
 pico_set_program_version(samwise-adcs "0.1")
@@ -44,11 +44,11 @@ pico_enable_stdio_uart(samwise-adcs 0)
 pico_enable_stdio_usb(samwise-adcs 1)
 
 # Add the standard library to the build
-target_link_libraries(onboarding
+target_link_libraries(samwise-adcs
         pico_stdlib pico_util)
 
 # Add the standard include files to the build
-target_include_directories(onboarding PRIVATE
+target_include_directories(samwise-adcs PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )

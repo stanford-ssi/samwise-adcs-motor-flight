@@ -29,34 +29,38 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project(samwise-adcs C CXX ASM)
+project(samwise-adcs-motor C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 file(GLOB top CONFIGURE_DEPENDS "src/*.cpp")
-file(GLOB gnc CONFIGURE_DEPENDS "src/gnc/*.cpp")
-file(GLOB drivers CONFIGURE_DEPENDS "src/drivers/*.cpp")
+file(GLOB adm1176 CONFIGURE_DEPENDS "src/drivers/adm1176/*.cpp")
+file(GLOB init CONFIGURE_DEPENDS "src/init/*.cpp")
+file(GLOB watchdog CONFIGURE_DEPENDS "src/drivers/watchdog/*.cpp")
 
-add_executable(samwise-adcs ${top} ${gnc} ${drivers})
+add_executable(samwise-adcs-motor ${top} ${adm1176} ${init} ${watchdog})
 
-pico_set_program_name(samwise-adcs "samwise_adcs")
-pico_set_program_version(samwise-adcs "0.1")
+pico_set_program_name(samwise-adcs-motor "samwise_adcs_motor")
+pico_set_program_version(samwise-adcs-motor "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(samwise-adcs 0)
-pico_enable_stdio_usb(samwise-adcs 1)
+pico_enable_stdio_uart(samwise-adcs-motor 0)
+pico_enable_stdio_usb(samwise-adcs-motor 1)
 
 # Add the standard library to the build
-target_link_libraries(samwise-adcs
-        pico_stdlib pico_util)
+target_link_libraries(samwise-adcs-motor
+        pico_stdlib 
+		pico_util
+		pico_time
+		hardware_i2c)
 
 # Add the standard include files to the build
-target_include_directories(samwise-adcs PRIVATE
+target_include_directories(samwise-adcs-motor PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
-target_include_directories(samwise-adcs PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
+target_include_directories(samwise-adcs-motor PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 
-pico_add_extra_outputs(samwise-adcs)
+pico_add_extra_outputs(samwise-adcs-motor)

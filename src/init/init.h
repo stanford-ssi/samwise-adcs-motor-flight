@@ -9,5 +9,6 @@
 
 #include "drivers/adm1176/adm1176.h"
 #include "drivers/watchdog/watchdog.h"
+#include "drivers/motor/motor.h"
 
 bool init(slate_t *slate);

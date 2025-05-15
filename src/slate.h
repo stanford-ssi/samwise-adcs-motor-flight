@@ -15,6 +15,7 @@
 #include "pico/types.h"
 #include "drivers/adm1176/adm1176.h"
 #include "drivers/watchdog/watchdog.h"
+#include "drivers/motor/motor.h"
 
 using namespace linalg::aliases;
 using namespace linalg;
@@ -23,6 +24,8 @@ typedef struct
 {
 	watchdog_t watchdog;
 	adm1176_t power_monitor;
+
+	motor_t motors[4];
 } slate_t;
 
 extern slate_t slate;

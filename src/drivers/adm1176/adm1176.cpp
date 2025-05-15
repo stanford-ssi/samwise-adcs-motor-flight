@@ -11,6 +11,7 @@ static uint16_t adm1176_read_reg(adm1176_t *device, uint8_t reg) {
 // Read 3 byte (voltage + current)
 static void adm1176_read_voltage_current(adm1176_t *device, uint16_t *voltage_raw, uint16_t *current_raw) {
     uint8_t buf[3];
+
     i2c_read_blocking(device->i2c, device->address, buf, 3, false);
     *current_raw = (buf[0] << 4 | buf[1] >> 4); // Current MSBs + partial LSBs
     *voltage_raw = ((buf[1] & 0x0F) << 8) | buf[2]; // Voltage MSBs + LSBs
@@ -32,7 +33,7 @@ float adm1176_get_voltage(adm1176_t *device) {
 
 float adm1176_get_current(adm1176_t *device) {
     uint16_t raw_current = adm1176_read_reg(device, ADM1176_CURRENT_REG);
-    return raw_current * (0.10584 / 4096.0); // numerator is I_fullscale, page 20 ADM1176
+    return raw_current * 0.10584 / (4096.0 * device->sense_resistor); // numerator is I_fullscale, page 20 ADM1176
 }
 
 void adm1176_config_alert(adm1176_t *device, uint8_t config) {

@@ -38,8 +38,9 @@ file(GLOB top CONFIGURE_DEPENDS "src/*.cpp")
 file(GLOB adm1176 CONFIGURE_DEPENDS "src/drivers/adm1176/*.cpp")
 file(GLOB init CONFIGURE_DEPENDS "src/init/*.cpp")
 file(GLOB watchdog CONFIGURE_DEPENDS "src/drivers/watchdog/*.cpp")
+file(GLOB motor CONFIGURE_DEPENDS "src/drivers/motor/*.cpp")
 
-add_executable(samwise-adcs-motor ${top} ${adm1176} ${init} ${watchdog})
+add_executable(samwise-adcs-motor ${top} ${adm1176} ${init} ${watchdog} ${motor})
 
 pico_set_program_name(samwise-adcs-motor "samwise_adcs_motor")
 pico_set_program_version(samwise-adcs-motor "0.1")
@@ -53,7 +54,9 @@ target_link_libraries(samwise-adcs-motor
         pico_stdlib 
 		pico_util
 		pico_time
-		hardware_i2c)
+		hardware_i2c
+		hardware_pwm
+		hardware_gpio)
 
 # Add the standard include files to the build
 target_include_directories(samwise-adcs-motor PRIVATE

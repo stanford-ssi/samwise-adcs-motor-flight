@@ -5,18 +5,21 @@ static bool init_gpio_pins(slate_t *slate){
     i2c_init(SAMWISE_POWER_MONITOR_I2C, 100 * 1000);
     gpio_set_function(SAMWISE_POWER_MONITOR_SDA_PIN, GPIO_FUNC_I2C);
     gpio_set_function(SAMWISE_POWER_MONITOR_SCL_PIN, GPIO_FUNC_I2C);
-
+    gpio_pull_up(SAMWISE_POWER_MONITOR_SDA_PIN);
+    gpio_pull_up(SAMWISE_POWER_MONITOR_SCL_PIN);
 	return true;
 }
 
 static adm1176_t power_monitor;
 
 static bool init_drivers(slate_t *slate){
-
 	power_monitor = adm1176_mk(SAMWISE_POWER_MONITOR_I2C, 
 					ADM1176_I2C_ADDR,
 					ADM1176_DEFAULT_SENSE_RESISTOR,
 					ADM1176_DEFAULT_VOLTAGE_RANGE);
+
+	uint8_t reg = 0b1;
+    i2c_write_blocking(power_monitor.i2c, power_monitor.address, &reg, 1, true);
 
 	slate->power_monitor = power_monitor;
 
@@ -58,11 +61,27 @@ static bool init_motors(slate_t *slate) {
 	return true;
 }
 
+static bool init_spi(slate_t* slate) {
+	// SPI
+	spi_init(spi0, 1000 * 1000);
+	spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_1, SPI_MSB_FIRST);
+
+    gpio_set_function(ADCS_MOTOR_SDO, GPIO_FUNC_SPI);
+    gpio_set_function(ADCS_MOTOR_SDI, GPIO_FUNC_SPI);
+    gpio_set_function(ADCS_MOTOR_SCLK, GPIO_FUNC_SPI);
+
+	return true;
+}
+
 bool init(slate_t *slate) {
 	printf("Initializing...\n");
     gpio_init(SAMWISE_WATCHDOG_FEED_PIN);
+
 	ASSERT(init_gpio_pins(slate));
     gpio_set_dir(SAMWISE_WATCHDOG_FEED_PIN, GPIO_OUT);
+
+	ASSERT(init_spi(slate));
+
 	ASSERT(init_motors(slate));
 
 	ASSERT(init_drivers(slate));

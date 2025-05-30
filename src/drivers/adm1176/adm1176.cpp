@@ -1,4 +1,5 @@
 #include "adm1176.h"
+#include "pico/printf.h"
 
 // Read 2-byte register
 static uint16_t adm1176_read_reg(adm1176_t *device, uint8_t reg) {
@@ -27,8 +28,13 @@ adm1176_t adm1176_mk(i2c_inst_t *i2c, uint8_t address, float sense_resistor, flo
 }
 
 float adm1176_get_voltage(adm1176_t *device) {
-    uint16_t raw = adm1176_read_reg(device, ADM1176_VOLTAGE_REG);
-    return raw * (device->voltage_range / 4096.0);
+    //uint16_t raw = adm1176_read_reg(device, 0b01000000);
+
+	uint8_t buf[3];
+    i2c_read_blocking(device->i2c, device->address, buf, 3, false);
+	printf("Battery voltage: %x-%x-%x \n", buf[0], buf[1],buf[2]);
+	uint16_t raw = ((buf[0]) << 4) | (buf[1] >> 4); // Voltage MSBs + LSBs
+    return raw * (26.36 / 4096.0);
 }
 
 float adm1176_get_current(adm1176_t *device) {

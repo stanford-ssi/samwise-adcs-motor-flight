@@ -12,7 +12,7 @@
 #define ADM1176_ALERT_REG  0x02
 
 // Default values
-#define ADM1176_DEFAULT_VOLTAGE_RANGE 26.35f  // 26.35V range
+#define ADM1176_DEFAULT_VOLTAGE_RANGE 15.0f  // 26.35V range
 #define ADM1176_DEFAULT_SENSE_RESISTOR 0.02f  // 0.1 ohm
 
 typedef struct {

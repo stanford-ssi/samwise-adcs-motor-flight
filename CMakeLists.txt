@@ -56,13 +56,15 @@ target_link_libraries(samwise-adcs-motor
 		pico_time
 		hardware_i2c
 		hardware_pwm
+		hardware_spi
 		hardware_gpio)
 
 # Add the standard include files to the build
 target_include_directories(samwise-adcs-motor PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
+# The below was in there and I don't think I need or want it, but here it is
+# ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 
 target_include_directories(samwise-adcs-motor PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src)
 

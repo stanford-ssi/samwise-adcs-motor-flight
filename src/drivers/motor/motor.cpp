@@ -33,6 +33,8 @@ motor_t motor_init(int FAULT_pin,
 	gpio_set_dir(motor.FAULT_pin_, GPIO_IN);
 	gpio_disable_pulls(motor.FAULT_pin_);
 
+	// Set freq to 20hz
+	pwm_set_clkdiv(slice_num, 1.83f);
 	pwm_set_wrap(slice_num, 1<<12);
 	// SPI Driver
 	gpio_init(motor.SCS_pin_);
@@ -49,13 +51,12 @@ void motor_enable(motor_t* motor){
 	gpio_set_dir(motor->SLEEP_pin_, GPIO_OUT);
 	gpio_pull_up(motor->SLEEP_pin_);
 	gpio_put(motor->SLEEP_pin_, 1);
+	sleep_ms(10);
+	// Unlock registers for writing
+	motor_write_register(motor, 0x3, 0b011);
 
-	// duty_buf sets the pwm duty characteristics
-	uint8_t reg_lock_buf[2] = { 0x3, 0b11};
-
-    gpio_put(motor->SCS_pin_, 0);  // Select device
-    spi_write_blocking(spi0, reg_lock_buf, 2);
-    gpio_put(motor->SCS_pin_, 1);  // Deselect device
+	// Write register 0x4 to set digital hall control
+	motor_write_register(motor, 0x4, 0x82);
 
 	pwm_set_enabled(motor->pwm_slice_, true);
 }
@@ -71,39 +72,66 @@ void motor_set_speed(motor_t* motor, uint16_t speed) {
 }
 
 uint8_t motor_read_register(motor_t* motor, uint8_t reg_addr) {
-    uint8_t tx_buf[2];
-    uint8_t rx_buf[2];
+	uint8_t tx_buf[2] = {0,0};
+	uint8_t rx_buf[2] = {0,0};
 
-    // Construct the read command (MSB = 1 for read)
-    tx_buf[0] = 0x8b;  // Read from register
-    tx_buf[1] = 0x00;                      // Dummy byte
+	// Construct the read xcommand (MSB = 1 for read)
+	tx_buf[0] = 0;
+	tx_buf[0] |= (1 << 7);  // Read from register
+	tx_buf[0] |= (reg_addr << 1);
+
+	uint8_t parity_count = 0;
+	for (int i=0; i < 8; i++) {
+		if (tx_buf[0] & (1 << i)){
+			parity_count++;
+		}
+	}
+	if (parity_count % 2 == 1) {
+		tx_buf[0] |= 1;
+	}
+
+	tx_buf[1] = 0x00;  // Dummy byte
+
+	gpio_put(motor->SCS_pin_, 0);
+	spi_write_read_blocking(spi0, tx_buf, rx_buf, 2);
+	gpio_put(motor->SCS_pin_, 1);
+
+	sleep_us(400);
+
+	return rx_buf[1];  // Second byte contains the register value
+}
+
+uint8_t motor_write_register(motor_t* motor, uint8_t reg_addr, uint8_t data) {
+	uint8_t tx_buf[2] = {0,0};
+	uint8_t rx_buf[2] = {0,0};
+
+	tx_buf[0] = 0;
+	// Construct the write command (MSB = 0 for write - so do nothing)
+	tx_buf[0] |= (reg_addr << 1);
+
+	uint8_t parity_count = 0;
+	for (int i=0; i < 8; i++) {
+		if (tx_buf[0] & (1 << i)){
+			parity_count++;
+		}
+	}
+	if (parity_count % 2 == 1) {
+		tx_buf[0] |= 1;
+	}
 	
-	printf("tx_buf: %x\n", tx_buf[0]);
+	tx_buf[1] = data; 
 
-    gpio_put(motor->SCS_pin_, 0);
-    spi_write_read_blocking(spi0, tx_buf, rx_buf, 2);
-    gpio_put(motor->SCS_pin_, 1);
+	gpio_put(motor->SCS_pin_, 0);
+	spi_write_read_blocking(spi0, tx_buf, rx_buf, 2);
+	gpio_put(motor->SCS_pin_, 1);
 
-    return rx_buf[1];  // Second byte contains the register value
+	sleep_us(400);
+
+    return rx_buf[0];  // Second byte contains the previous value
 }
 
 void motor_reset_fault(motor_t* motor) {
-	/*
-    uint8_t buf[2] = { 0x4, 0b11 };
-
-    gpio_put(motor->SCS_pin_, 0);  // Select device
-    spi_write_blocking(spi0, buf, 2);
-    gpio_put(motor->SCS_pin_, 1);  // Deselect device
-	*/
     gpio_put(motor->SLEEP_pin_, 0);
 	sleep_us(30);
     gpio_put(motor->SLEEP_pin_, 1);
-}
-
-void motor_buck_enable(motor_t* motor) {
-    uint8_t buck_buf[2] = { 0x8, 0b00011010 };
-
-    gpio_put(motor->SCS_pin_, 0);  // Select device
-    spi_write_blocking(spi0, buck_buf, 2);
-    gpio_put(motor->SCS_pin_, 1);  // Deselect device
 }

@@ -6,6 +6,7 @@
 #include "init/init.h"
 #include "drivers/motor/motor.h"
 #include "hardware/gpio.h"
+#include "hardware/clocks.h"
 
 #define TEST
 
@@ -13,48 +14,51 @@ int main()
 {
     stdio_init_all();
 	printf("Code start\n");
-	sleep_ms(5000);
+	sleep_ms(3000);
 	slate_t slate;
 	init(&slate);
 
 	printf("Enable motors 1 to 3\n");
-	motor_enable(&slate.motors[1]);
 	motor_enable(&slate.motors[2]);
-	motor_enable(&slate.motors[3]);
+	
+	uint8_t arb_2 = motor_read_register(&slate.motors[2], 0x5);
+
+	sleep_ms(1000);
+	printf("Motor 3 arbitrary: %x\n", arb_2);
 
 	printf("Sleeping!\n");
 	sleep_ms(1000);
 
-	//motor_buck_enable(&slate.motors[0]);
-	//motor_buck_enable(&slate.motors[1]);
-	//motor_buck_enable(&slate.motors[2]);
-	//motor_buck_enable(&slate.motors[3]);
-	//motor_reset_fault(&slate.motors[3]);
+	//motor_set_speed(&slate.motors[3], 1<<12);
 #ifdef TEST
-	uint8_t fault = 0x23;
-	uint8_t fault_2 = 0x45;
-	uint8_t fault_3 = 0x80;
-
     while (1)
     {
-		fault = motor_read_register(&slate.motors[1], 0x5);
-		fault_2 = motor_read_register(&slate.motors[2], 0x5);
-		fault_3 = motor_read_register(&slate.motors[3], 0x5);
-
-		printf("Motor 1 fault bit: %x\n", fault);
-		printf("Motor 2 fault bit: %x\n", fault_2);
+		uint8_t fault_3 = motor_read_register(&slate.motors[2], 0x0);
+		uint8_t arb = motor_read_register(&slate.motors[2], 0x5);
+		uint8_t reg_4 = motor_write_register(&slate.motors[2], 0x4, 0x82);
+		printf("---\n");
 		printf("Motor 3 fault bit: %x\n", fault_3);
-	
-		//printf("Battery voltage: %x-%x \n", buf[0], buf[1]);
+		printf("Motor 3 arbitrary: %x\n", arb);
+		printf("Motor 3 reg_4 bit: %x\n", reg_4);
+
 		/*
 		printf("Motor half speed\n"); 
 		motor_set_speed(&slate.motors[3], 1<<11);
-    	sleep_ms(500);
+
 
 		printf("Motor at no speed\n");
 		motor_set_speed(&slate.motors[3], 0);
-		sleep_ms(500);
+		sleep_ms(1000);
+		*/
 
+		//uint8_t fault = motor_read_register(&slate.motors[1], 0x5);
+		//uint8_t fault_2 = motor_read_register(&slate.motors[2], 0x5);
+
+		//printf("Motor 1 fault bit: %x\n", fault);
+		//printf("Motor 2 fault bit: %x\n", fault_2);
+	
+		//printf("Battery voltage: %x-%x \n", buf[0], buf[1]);
+		/*
 		printf("...\n");
 		float voltage = adm1176_get_voltage(&slate.power_monitor);
 	//float current = adm1176_get_current(&slate.power_monitor);

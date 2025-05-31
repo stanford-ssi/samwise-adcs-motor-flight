@@ -27,4 +27,4 @@ void motor_disable(motor_t* motor);
 void motor_set_speed(motor_t* motor, uint16_t speed);
 void motor_reset_fault(motor_t* motor);
 uint8_t motor_read_register(motor_t* motor, uint8_t reg_addr);
-void motor_buck_enable(motor_t* motor);
+uint8_t motor_write_register(motor_t* motor, uint8_t reg_addr, uint8_t data);

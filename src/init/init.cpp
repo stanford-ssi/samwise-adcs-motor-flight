@@ -15,13 +15,11 @@ static adm1176_t power_monitor;
 static bool init_drivers(slate_t *slate){
 	power_monitor = adm1176_mk(SAMWISE_POWER_MONITOR_I2C, 
 					ADM1176_I2C_ADDR,
-					ADM1176_DEFAULT_SENSE_RESISTOR,
-					ADM1176_DEFAULT_VOLTAGE_RANGE);
+					ADM1176_DEFAULT_SENSE_RESISTOR);
 
-	uint8_t reg = 0b1;
-    i2c_write_blocking(power_monitor.i2c, power_monitor.address, &reg, 1, true);
+    adm1176_on(&power_monitor);
 
-	slate->power_monitor = power_monitor;
+   	slate->power_monitor = power_monitor;
 
 	return true;
 }

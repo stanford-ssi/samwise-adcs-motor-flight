@@ -53,10 +53,9 @@ void motor_enable(motor_t* motor){
 	gpio_put(motor->SLEEP_pin_, 1);
 	sleep_ms(10);
 	// Unlock registers for writing
-	motor_write_register(motor, 0x3, 0b011);
+	//motor_write_register(motor, 0x3, 0b011);
 
-	// Write register 0x4 to set digital hall control
-	motor_write_register(motor, 0x4, 0x82);
+	//motor_write_register(motor, 0x4, 0x2);
 
 	pwm_set_enabled(motor->pwm_slice_, true);
 }
@@ -109,17 +108,21 @@ uint8_t motor_write_register(motor_t* motor, uint8_t reg_addr, uint8_t data) {
 	// Construct the write command (MSB = 0 for write - so do nothing)
 	tx_buf[0] |= (reg_addr << 1);
 
+	tx_buf[1] = data; 
+
 	uint8_t parity_count = 0;
 	for (int i=0; i < 8; i++) {
 		if (tx_buf[0] & (1 << i)){
 			parity_count++;
 		}
+        if (tx_buf[1] & (1 << i)) {
+            parity_count++;
+        }
 	}
 	if (parity_count % 2 == 1) {
 		tx_buf[0] |= 1;
 	}
 	
-	tx_buf[1] = data; 
 
 	gpio_put(motor->SCS_pin_, 0);
 	spi_write_read_blocking(spi0, tx_buf, rx_buf, 2);

@@ -71,6 +71,18 @@ static bool init_spi(slate_t* slate) {
 	return true;
 }
 
+static bool init_uart(slate_t* slate) {
+    gpio_set_function(ADCS_UART_COMM_TX, UART_FUNCSEL_NUM(uart1, 0)); // TX
+    gpio_set_function(ADCS_UART_COMM_RX, UART_FUNCSEL_NUM(uart1, 1)); // RX
+    
+    // Initialise UART 0
+    uart_init(uart1, 115200);
+
+    uart_puts(uart1, "hi :>");
+
+    return true;
+}
+
 bool init(slate_t *slate) {
 	printf("Initializing...\n");
     gpio_init(SAMWISE_WATCHDOG_FEED_PIN);
@@ -79,6 +91,8 @@ bool init(slate_t *slate) {
     gpio_set_dir(SAMWISE_WATCHDOG_FEED_PIN, GPIO_OUT);
 
 	ASSERT(init_spi(slate));
+
+    ASSERT(init_uart(slate));
 
 	ASSERT(init_motors(slate));
 

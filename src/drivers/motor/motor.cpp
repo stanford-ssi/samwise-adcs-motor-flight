@@ -52,10 +52,13 @@ void motor_enable(motor_t* motor){
 	gpio_pull_up(motor->SLEEP_pin_);
 	gpio_put(motor->SLEEP_pin_, 1);
 	sleep_ms(10);
-	// Unlock registers for writing
-	//motor_write_register(motor, 0x3, 0b011);
 
-	//motor_write_register(motor, 0x4, 0x2);
+	// Unlock registers for writing
+	motor_write_register(motor, 0x3, 0b011);
+    
+    // Digital Hall Effect Asynchronous
+	motor_write_register(motor, 0x4, 0x62);
+    motor_write_register(motor, 0xA, 3<<6);
 
 	pwm_set_enabled(motor->pwm_slice_, true);
 }

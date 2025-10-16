@@ -14,6 +14,11 @@ typedef struct {
 	int set_speed_;
 } motor_t;
 
+typedef struct {
+    int enabled_;
+    int speed_;
+} motor_desired_state_t;
+
 motor_t motor_init(int FAULT_pin, 
 					int SLEEP_pin, 
 					int DRVOFF_pin,

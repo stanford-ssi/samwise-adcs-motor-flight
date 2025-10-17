@@ -2,6 +2,8 @@
 
 #include "pico/types.h"
 
+#define PULSES_PER_REV 0.5f
+
 typedef struct {
 	int FAULT_pin_;
 	int SLEEP_pin_;
@@ -17,7 +19,9 @@ typedef struct {
 typedef struct {
     int enabled_;
     int speed_;
-} motor_desired_state_t;
+    int last_pulse_time_;
+    float rpm_;
+} motor_state_t;
 
 motor_t motor_init(int FAULT_pin, 
 					int SLEEP_pin, 
@@ -33,3 +37,5 @@ void motor_set_speed(motor_t* motor, uint16_t speed);
 void motor_reset_fault(motor_t* motor);
 uint8_t motor_read_register(motor_t* motor, uint8_t reg_addr);
 uint8_t motor_write_register(motor_t* motor, uint8_t reg_addr, uint8_t data);
+
+void fgout_irq(uint gpio, uint32_t events);

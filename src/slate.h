@@ -26,7 +26,8 @@ typedef struct
 	adm1176_t power_monitor;
 
 	motor_t motors[4];
-    motor_desired_state_t motor_state[4];
+    motor_state_t motor_state[4];
+    volatile motor_state_t  motor_measured[4];
 } slate_t;
 
 extern slate_t slate;

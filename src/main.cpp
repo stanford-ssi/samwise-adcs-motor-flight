@@ -1,5 +1,5 @@
-#include "pico/printf.h"
 #include "pico/stdlib.h"
+#include "pico/float.h"
 
 #include "slate.h"
 #include "pins.h"
@@ -10,17 +10,23 @@
 
 #define TEST
 
+slate_t slate;
+
 int main()
 {
     stdio_init_all();
 	sleep_ms(3000);
-	slate_t slate;
 	init(&slate);
 
     for (int m = 1; m < 4; m++){
         motor_enable(&slate.motors[m]);
         slate.motor_state[m].enabled_ = 1;
     }
+
+    float kp = 0.00002f;
+    float kd = -0.02f;
+    slate.motor_state[1].rpm_ = 1500.f;
+    float prev = 0.f;
 	
 	sleep_ms(1000);
 
@@ -28,28 +34,45 @@ int main()
 #ifdef TEST
     while (1)
     {
+        /*
         float v = adm1176_get_voltage(&slate.power_monitor);
         float c = adm1176_get_current(&slate.power_monitor);
 
         printf("Battery voltage: %f \n", v);
 		printf("Battery current: %f \n", c);
-
+        */
+        /*
         if (uart_is_readable(uart1)) {
             char read = uart_getc(uart1);
             uart_putc(uart1, read);
             int shift = (int) read;
             shift = shift - 0x30 + 3;
-            printf("%d", shift);
+            printf("%d\n", shift);
             slate.motor_state[1].speed_ = 1<<shift;
-        }
+        */
+
 
         for (int m = 1; m < 4; m++) {
             if (slate.motor_state[m].enabled_) {
-                printf("Setting motor %d\n", m);
+                // printf("Setting motor %d\n", m);
                 int motor_speed = slate.motor_state[m].speed_;
                 motor_set_speed(&slate.motors[m], motor_speed);
             }
         }
+
+        float diff = slate.motor_state[1].rpm_ - slate.motor_measured[1].rpm_;
+
+        float du = kp*diff + kd*(diff-prev)*5;
+
+        prev = diff;
+
+        printf("Correcting by %f\n", du);
+        printf("Speed at      %d\n", slate.motor_state[1].speed_);
+        slate.motor_state[1].speed_ += (int)round(du);
+        slate.motor_state[1].speed_ &= 0b11111111111;
+
+        printf("Motor 1 rpm: %f\n", slate.motor_measured[1].rpm_);
+
         /*
         if (slate.motor_state[1].speed_ == 0) {
             slate.motor_state[1].speed_ = 1<<11;
@@ -58,7 +81,7 @@ int main()
         }
         */
         uint8_t arb = motor_read_register(&slate.motors[1], 0x0);
-        printf("Motor 3 status bit: %x\n", arb);
+        //printf("Motor 3 status bit: %x\n", arb);
     }
 #else
 #endif

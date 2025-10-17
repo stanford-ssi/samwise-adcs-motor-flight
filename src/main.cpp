@@ -6,6 +6,7 @@
 #include "init/init.h"
 #include "drivers/motor/motor.h"
 #include "hardware/gpio.h"
+#include "hardware/timer.h"
 
 #define TEST
 

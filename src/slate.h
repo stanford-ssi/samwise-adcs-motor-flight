@@ -16,6 +16,8 @@
 #include "drivers/adm1176/adm1176.h"
 #include "drivers/watchdog/watchdog.h"
 #include "drivers/motor/motor.h"
+#include "util/uart_package.h"
+#include "util/timer_loop.h"
 
 using namespace linalg::aliases;
 using namespace linalg;
@@ -28,6 +30,9 @@ typedef struct
 	motor_t motors[4];
     motor_state_t motor_state[4];
     volatile motor_state_t  motor_measured[4];
+
+    rx_package_t rx_package;
+    tx_package_t tx_package;
 } slate_t;
 
 extern slate_t slate;

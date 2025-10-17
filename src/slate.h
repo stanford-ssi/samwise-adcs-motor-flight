@@ -17,7 +17,6 @@
 #include "drivers/watchdog/watchdog.h"
 #include "drivers/motor/motor.h"
 #include "util/uart_package.h"
-#include "util/timer_loop.h"
 
 using namespace linalg::aliases;
 using namespace linalg;

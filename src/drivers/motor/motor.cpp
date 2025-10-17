@@ -2,9 +2,11 @@
 
 #include "pico/printf.h"
 #include "pico/stdlib.h"
+#include "pico/time.h"
 #include "hardware/pwm.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
+#include "slate.h"
 
 motor_t motor_init(int FAULT_pin, 
 					int SLEEP_pin, 
@@ -33,6 +35,12 @@ motor_t motor_init(int FAULT_pin,
 	gpio_set_dir(motor.FAULT_pin_, GPIO_IN);
 	gpio_disable_pulls(motor.FAULT_pin_);
 
+    // FGOUT PIN SETUP
+    gpio_init(motor.FGOUT_pin_);
+    gpio_set_dir(motor.FGOUT_pin_, GPIO_IN);
+    gpio_set_irq_enabled_with_callback(motor.FGOUT_pin_, GPIO_IRQ_EDGE_FALL, true, &fgout_irq);
+    gpio_set_irq_enabled_with_callback(motor.FAULT_pin_, GPIO_IRQ_EDGE_FALL, true, &fgout_irq);
+
 	// Set freq to 20hz
 	pwm_set_clkdiv(slice_num, 1.83f);
 	pwm_set_wrap(slice_num, 1<<12);
@@ -57,10 +65,13 @@ void motor_enable(motor_t* motor){
 	motor_write_register(motor, 0x3, 0b011);
     
     // Digital Hall Effect Asynchronous
-	motor_write_register(motor, 0x4, 0x62);
+	motor_write_register(motor, 0x4, 0x66);
+    // FGOUT select
     motor_write_register(motor, 0xA, 3<<6);
 
 	pwm_set_enabled(motor->pwm_slice_, true);
+
+    // Set up interrupt request
 }
 
 void motor_disable(motor_t* motor) {
@@ -140,4 +151,61 @@ void motor_reset_fault(motor_t* motor) {
     gpio_put(motor->SLEEP_pin_, 0);
 	sleep_us(30);
     gpio_put(motor->SLEEP_pin_, 1);
+}
+
+void fgout_irq(uint gpio, uint32_t events) {
+    int motor_id = 0;
+    bool fgout = false;
+    bool fault = false;
+
+    if (gpio == MOTOR_0_FGOUT_PIN) {
+        motor_id = 0;
+        fgout = true;
+    }
+    if (gpio == MOTOR_1_FGOUT_PIN) {
+        motor_id = 1;
+        fgout = true;
+    }
+    if (gpio == MOTOR_2_FGOUT_PIN) {
+        motor_id = 2;
+        fgout = true;
+    }
+    if (gpio == MOTOR_3_FGOUT_PIN) {
+        motor_id = 3;
+        fgout = true;
+    }
+
+    if (gpio == MOTOR_0_FAULT_PIN) {
+        motor_id = 0;
+        fault = true;
+    }
+    if (gpio == MOTOR_1_FAULT_PIN) {
+        motor_id = 1;
+        fault = true;
+    }
+    if (gpio == MOTOR_2_FAULT_PIN) {
+        motor_id = 2;
+        fault = true;
+    }
+    if (gpio == MOTOR_3_FAULT_PIN) {
+        motor_id = 3;
+        fault = true;
+    }
+    if (fgout) {
+        absolute_time_t now = get_absolute_time();
+        absolute_time_t prev = slate.motor_measured[motor_id].last_pulse_time_;
+        slate.motor_measured[motor_id].last_pulse_time_ = now;
+
+        // Compute instantaneous RPM
+        if (!is_nil_time(prev)) {
+            int64_t dt_us = absolute_time_diff_us(prev, now); // microseconds
+            float dt_s = dt_us / 1e6f;
+            float rpm = 60.0f / (dt_s * PULSES_PER_REV);
+            slate.motor_measured[motor_id].rpm_ =  (rpm > 6000) ? 6000: rpm;
+        }
+    }
+
+    if (fault) {
+        printf("Womp womp\n");
+    }
 }

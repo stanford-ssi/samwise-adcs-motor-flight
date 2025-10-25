@@ -1,5 +1,6 @@
 import serial
 import struct
+import time
 
 def send_uart_packet(port, baudrate, floats):
     """
@@ -29,6 +30,6 @@ def send_uart_packet(port, baudrate, floats):
 
 if __name__ == "__main__":
     # Example usage
-    floats_to_send = [1000., 1200, 100, -200]
+    floats_to_send = [1000., 4200., 100, -200]
     send_uart_packet('/dev/ttyUSB0', 115200, floats_to_send)
 

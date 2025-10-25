@@ -30,8 +30,12 @@ typedef struct
     motor_state_t motor_state[4];
     volatile motor_state_t  motor_measured[4];
 
+    struct repeating_timer control_timer;
+    struct repeating_timer telem_timer;
+
     rx_package_t rx_package;
     tx_package_t tx_package;
+    int rx_count;
 } slate_t;
 
 extern slate_t slate;

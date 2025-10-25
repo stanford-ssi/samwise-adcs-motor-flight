@@ -71,14 +71,31 @@ static bool init_spi(slate_t* slate) {
 	return true;
 }
 
+void uart_rx_read(){
+    char* rx_bytes = (char*) &slate.rx_package;
+    while (uart_is_readable(uart1)) {
+        char read = uart_getc(uart1);
+        uart_putc(uart1, read);
+        rx_bytes[slate.rx_count] = read; 
+        slate.rx_count += 1;
+        slate.rx_count %= sizeof(rx_package_t);
+    }
+}
+
 static bool init_uart(slate_t* slate) {
     gpio_set_function(ADCS_UART_COMM_TX, UART_FUNCSEL_NUM(uart1, 0)); // TX
     gpio_set_function(ADCS_UART_COMM_RX, UART_FUNCSEL_NUM(uart1, 1)); // RX
-    
-    // Initialise UART 0
-    uart_init(uart1, 115200);
+                                                                      //
+    // Disable FIFO to get interrupt per character 
+    uart_set_fifo_enabled(uart1, false);
 
-    uart_puts(uart1, "hi :>");
+    irq_set_exclusive_handler(UART1_IRQ, uart_rx_read);
+    irq_set_enabled(UART1_IRQ, true);
+
+    uart_set_irqs_enabled(uart1, true, false);
+    
+    // Initialise UART 1
+    uart_init(uart1, 115200);
 
     return true;
 }

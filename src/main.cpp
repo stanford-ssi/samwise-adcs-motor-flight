@@ -6,7 +6,7 @@
 #include "init/init.h"
 #include "drivers/motor/motor.h"
 #include "hardware/gpio.h"
-#include "hardware/timer.h"
+#include "util/timer_util.h"
 
 #define TEST
 
@@ -39,10 +39,14 @@ int main()
     }
 
     int period_ms = 100;
-    struct repeating_timer  timer;
-    add_repeating_timer_ms(period_ms, timer_callback, NULL, &timer);
 
-    slate.rx_package.target_rpm_[1] = 1500.f;
+    // Timer for motor control loop
+    add_repeating_timer_ms(period_ms, control_timer_callback, NULL, &slate.control_timer);
+
+    // Timer for telemetry sending
+    add_repeating_timer_ms(20, telem_timer_callback, NULL, &slate.telem_timer);
+
+    slate.rx_package.target_rpm[1] = 1500.f;
     slate.motor_state[1].rpm_ = 1500.f;
 	
 	sleep_ms(1000);
@@ -50,18 +54,14 @@ int main()
     char* rx_bytes = (char*) &slate.rx_package;
     int rx_count = 0;
 
-	//motor_set_speed(&slate.motors[3], 1<<12);
 #ifdef TEST
     while (1)
     {
-        /*
         float v = adm1176_get_voltage(&slate.power_monitor);
         float c = adm1176_get_current(&slate.power_monitor);
 
-        printf("Battery voltage: %f \n", v);
-		printf("Battery current: %f \n", c);
-        */
-
+        slate.tx_package.battery_voltage = v;
+        slate.tx_package.battery_current = c;
         
         if (uart_is_readable(uart1)) {
             char read = uart_getc(uart1);
@@ -74,7 +74,7 @@ int main()
 
         for (int m = 1; m < 4; m++) {
 
-            slate.motor_state[m].rpm_ = slate.rx_package.target_rpm_[m];
+            slate.motor_state[m].rpm_ = slate.rx_package.target_rpm[m];
             if (slate.motor_state[m].enabled_) {
                 // printf("Setting motor %d\n", m);
                 int motor_speed = slate.motor_state[m].speed_;
@@ -87,7 +87,7 @@ int main()
         //printf("Motor 3 status bit: %x\n", arb);
         */
         printf("Motor speed at %f\n", slate.motor_measured[1].rpm_);
-        sleep_ms(100);
+        sleep_ms(10);
     }
 #else
 #endif
